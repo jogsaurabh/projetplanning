@@ -15,8 +15,10 @@ from PIL import Image
 image = Image.open('logo.PNG')
 headercol1,headercol2,co3=st.columns([2,10,4])
 with headercol1 : st.image(image,)
-with headercol2 : st.header(f":blue[Dec Bectochem Planning System]")
-
+with headercol2 : st.header(f":blue[DecBectochem Planning System]")
+with co3:
+    if st.session_state['loggedIn'] ==True:
+        st.write(f"Welcome: {st.session_state['UserName']} |Role: {st.session_state['Role']}")
 st.markdown("""---""")
 #st.header(f":blue[Project Planning]")
 headerSection = st.container()
@@ -193,8 +195,7 @@ def user_update():
 
 def show_view():
     st.write(f"Welcom: {st.session_state['UserName']} |Role: {st.session_state['Role']}")
-    
-    
+    st.error("You are not Authorised to Access this Page...")
 
 def show_admin():
     st.write(f"{st.session_state['UserName']} | {st.session_state['Role']} |")
@@ -207,6 +208,13 @@ def show_admin():
         user_update()
     with del_t:
         del_user()
+
+def show__normal_view():
+    st.header(f":blue[Production Planning]")
+    st.subheader(f":green[Stpe1:- To Update Stock & Vendor Master details click on-] :blue[Update Data]")
+    st.subheader(f":green[Stpe2:- To Set new Project Time Lines click on- ] :blue[Update Schedule]")
+    st.subheader(f":green[Stpe3:- To See Report click on- ] :blue[Dashboard]")
+
 
 def LoggedOut_Clicked():
     st.session_state['loggedIn'] = False
@@ -236,13 +244,13 @@ with headerSection:
         if st.session_state['loggedIn']:
             show_logout_page()   
             if st.session_state['Role'] == "View":
-                show_view()
+                show__normal_view()
             elif st.session_state['Role'] == "Purchase":
-                show_view()
+                show__normal_view()
             elif st.session_state['Role'] == "Production":
-                show_view()
+                show__normal_view()
             elif st.session_state['Role'] == "Projects":
-                show_view()
+                show__normal_view()
             else:
                 #st.session_state['Role'] =="Admin":
                 show_admin()
