@@ -7,6 +7,7 @@ import datetime
 from functions import get_oldData
 from datetime import date, timedelta
 import pickle
+from functions import update_user,delet_user,check_login,update_password,add_new_user,get_users,get_oldData
 import streamlit.components.v1 as components
 st.set_page_config(
     page_title="Project Planning",
@@ -19,16 +20,35 @@ image = Image.open('logo.PNG')
 headercol1,headercol2,co3=st.columns([2,10,4])
 with headercol1 : st.image(image,)
 with headercol2 : st.header(f":blue[Production Planning]")
+with co3:
+    if st.session_state['loggedIn'] ==True:
+        st.write(f"Welcom: {st.session_state['UserName']} |Role: {st.session_state['Role']}")
 st.markdown("""---""")
-from functions import get_oldData
+headerSection = st.container()
+mainSection = st.container()
+loginSection = st.container()
+logOutSection = st.container()
+
 DataUpdate_Con = st.container()
 ScheduleUpdateCon=st.container()
 DashboardCon=st.container()
+
 cwd = os.getcwd()
     #print (cwd)
 path_file_vend=r"C:\Users\JSaurabh\OneDrive - Bectochem Consultant & Engineers Pvt ltd\Documents\MIS\purchase\vendor master.XLSX"
 path_file_po=r"C:\Users\JSaurabh\OneDrive - Bectochem Consultant & Engineers Pvt ltd\Documents\MIS\purchase\ekko.XLSX"
 path_file_stock=r"C:\Users\JSaurabh\OneDrive - Bectochem Consultant & Engineers Pvt ltd\Documents\MIS\purchase\Stock Statement.XLSX"
+def LoggedOut_Clicked():
+    st.session_state['loggedIn'] = False
+
+def show_logout_page():
+    loginSection.empty()
+    with logOutSection:
+        st.sidebar.button ("Log Out", key="logout", on_click=LoggedOut_Clicked)
+
+def show_view():
+    st.write(f"Welcome: {st.session_state['UserName']} |Role: {st.session_state['Role']}")
+    
 
 def updatevendor():
         #get ekko-POfile
@@ -177,38 +197,108 @@ def ShowScheduleUpdate():
             st.toast("Updated Completed...")
             #now next time update Old database
             #st.session_state['genew']=True
-        
+
 
 def showDataUpdate():
 
     with DataUpdate_Con:
-        st.subheader(f":blue[Update Master Data]")
-        update=st.button("Update Master Data",key="update")
-        if update:
-            updatevendor()
-            getCurrentStock()
-            st.success("All Masters Updated ...")
+        if st.session_state['Role'] == "View":
+            st.error("You are not Authorised to Access this Page...")
+        else:
+
+            st.subheader(f":blue[Update Master Data]")
+            update=st.button("Update Master Data",key="update")
+            if update:
+                updatevendor()
+                getCurrentStock()
+                st.success("All Masters Updated ...")
 
 def ScheduleUpdate():
     with ScheduleUpdateCon:
-          ShowScheduleUpdate()
+        if st.session_state['Role'] == "View":
+            st.error("You are not Authorised to Access this Page...")
+        else:
+            ShowScheduleUpdate()
 
 def Dashboard():
       with DashboardCon:
             dashboardShow()
-# with st.container():
-#     tab1,tab2,tab3 =st.tabs(["Update Master Data","Update Production Schedule","Dashboard"],)    
-#     with tab1:
-#         showDataUpdate()
-#     with tab2:
-#         ScheduleUpdate()
-#     with tab3:
-#         Dashboard()
-with st.sidebar:
-    prOptions=st.radio("",["Update Master Data","Update Production Schedule","Dashboard"],key="rop_production")
-    if prOptions=="Update Master Data":
-          showDataUpdate()
-    elif prOptions=="Update Production Schedule":
-          ScheduleUpdate()
+
+def show_login_page():
+    with loginSection:
+        #with co3:st.write(f"User:-{st.session_state['User']} | Role:-{st.session_state['Role']}")
+        tab1,tab2 =st.tabs(["Login ","   Change Password   "])
+        with tab1:
+            
+            if st.session_state['loggedIn'] == False:
+                #st.session_state['username'] = ''
+                st.title(f":blue[Login]") 
+                userName = st.text_input (label="User Name", value="", placeholder="Enter your user name",key="k1")
+                password = st.text_input (label="Password", value="",placeholder="Enter password", type="password",key="k2")
+                st.button ("Login", on_click=check_login, args= (userName, password))
+                   
+        with tab2:
+            with st.form("New User",clear_on_submit=True):
+                
+                st.title(f":blue[Change Password]")
+                userid = st.text_input (label="User Id", value="", placeholder="Enter your user ID",key="k5")
+                password = st.text_input (label="Password", value="",placeholder="Enter Current Password", type="password",key="k6")
+                new_pass = st.text_input (label="New Password", value="", placeholder="Enter New Password", type="password",key="k3")
+                renew_pass = st.text_input (label="New Password", value="", placeholder="ReEnter New Password", type="password",key="k4")
+                submit_user =st.form_submit_button("Submit")
+                if submit_user:
+                    if new_pass == renew_pass:
+                        #createuser=create_user(displayname,userid,password,designation)
+                        newpass=update_password(userid,password,new_pass)
+                        st.toast(newpass)
+                    else:
+                        st.error('New Password and ReEntered Password not matching...')
+                #st.form_submit_button("Submit",on_click=Register_Clicked, args= (userid, password,designation,displayname))
+                #st.button ("Register", on_click=Register_Clicked, args= (userid, password,designation,displayname))
+
+
+def show_production_planning_page():
+    with loginSection:
+        with st.sidebar:
+            prOptions=st.radio("",["Update Master Data","Update Production Schedule","Dashboard"],key="rop_production")
+            if prOptions=="Update Master Data":
+                showDataUpdate()
+            elif prOptions=="Update Production Schedule":
+                ScheduleUpdate()
+            else:
+                Dashboard()
+
+#main login code
+with headerSection:
+    # for login checking
+    if 'User' not in st.session_state:
+        st.session_state['User'] = ""
+    
+    if 'UserName' not in st.session_state:
+        st.session_state['UserName'] = ""
+    
+    if 'Role' not in st.session_state:
+        st.session_state['Role'] = ""
+    
+    if 'loggedIn' not in st.session_state:
+        st.session_state['loggedIn'] = False
+        show_login_page()
+                
     else:
-          Dashboard()
+        if st.session_state['loggedIn']:
+            show_logout_page()   
+            # if st.session_state['Role'] == "View":
+            #     show_view()
+            # elif st.session_state['Role'] == "Purchase":
+            #     show_production_planning_page()
+            # elif st.session_state['Role'] == "Production":
+            #     show_production_planning_page()
+            # elif st.session_state['Role'] == "Projects":
+            #     show_production_planning_page()
+            # else:
+            #     #st.session_state['Role'] =="Admin":
+            show_production_planning_page()
+            
+        else:
+            show_login_page()
+
